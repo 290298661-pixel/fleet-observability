@@ -1,0 +1,17 @@
+# Grafana 告警 — AlertManager 通知通道
+#
+# 将 Grafana 管理的告警路由到 AlertManager，AlertManager
+# 再通过 webhook 转发到飞书/钉钉（复用 NHW 的通知模块）。
+
+apiVersion: 1
+
+notifiers:
+  - name: AlertManager
+    type: prometheus-alertmanager
+    uid: alertmanager
+    is_default: true
+    settings:
+      url: http://alertmanager-operated.monitoring.svc:9093
+      # 如果 AlertManager 启用了认证，配置 basic auth
+      # basicAuthUser: admin
+      # basicAuthPassword: admin

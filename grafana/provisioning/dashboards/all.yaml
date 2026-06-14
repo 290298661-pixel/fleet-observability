@@ -1,0 +1,14 @@
+# Grafana 仪表盘 Provisioning
+# 自动从带有 grafana_dashboard=1 标签的 ConfigMap 中装载所有仪表盘。
+# 仪表盘 JSON 文件在 grafana/dashboards/ 中进行版本控制。
+
+apiVersion: 1
+
+providers:
+  - name: FleetObservability
+    type: file
+    updateIntervalSeconds: 30
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/dashboards
+      foldersFromFilesStructure: true
