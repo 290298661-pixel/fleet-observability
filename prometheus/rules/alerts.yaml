@@ -1,0 +1,245 @@
+groups:
+  - name: fleet_slo_alerts
+    rules:
+      # =========================================================================
+      # SLO 燃烧速率告警 — Game Fleet 分配可用性
+      #
+      # 方法论: Google SRE Workbook, 第 5 章 — "基于 SLO 的告警"
+      # 多窗口、多燃烧速率方案同时避免误报（短暂尖峰）
+      # 和漏报（缓慢侵蚀）。
+      #
+      # SLI:  allocation_success_rate = Allocated / (Allocated + Failed)
+      # SLO:  月度 99.5%
+      # 错误预算: 0.5%（约 21.6 分钟/月）
+      #
+      # 燃烧速率阈值:
+      #   - 14.4x: 1 小时内消耗 5% 月度错误预算
+      #            5 分钟内消耗 2% 月度错误预算
+      #   - 6x:    6 小时内消耗 30% 月度错误预算
+      # =========================================================================
+
+      # 短窗口 — 捕获突发严重恶化
+      # 5 分钟窗口, 燃烧速率 > 14.4 → 错误率 > 7.2%
+      - alert: SLOBurnRateCritical_Short
+        expr: |
+          (
+            sum(rate(gfd_allocation_total{phase="Failed"}[5m]))
+            /
+            sum(rate(gfd_allocation_total[5m]))
+          ) > 0.072
+        for: 2m
+        labels:
+          severity: critical
+          slo: allocation-availability
+          window: short-5m
+          burn_rate: "14.4"
+        annotations:
+          summary: "SLO 燃烧速率 CRITICAL（短窗口）"
+          description: >
+            过去 5 分钟分配错误率为 {{ $value | humanizePercentage }}
+            （阈值: 7.2%）。
+            此燃烧速率（14.4x）如果持续，将在约 2 小时内
+            耗尽月度错误预算。
+            舰队: {{ $labels.fleet }}
+
+      # 中窗口 — 捕获持续问题
+      # 1 小时窗口, 燃烧速率 > 14.4 → 错误率 > 7.2%
+      - alert: SLOBurnRateWarning_Medium
+        expr: |
+          (
+            sum(rate(gfd_allocation_total{phase="Failed"}[1h]))
+            /
+            sum(rate(gfd_allocation_total[1h]))
+          ) > 0.072
+        for: 5m
+        labels:
+          severity: warning
+          slo: allocation-availability
+          window: medium-1h
+          burn_rate: "14.4"
+        annotations:
+          summary: "SLO 燃烧速率 WARNING（中窗口）"
+          description: >
+            过去 1 小时分配错误率为 {{ $value | humanizePercentage }}
+            （阈值: 7.2%）。
+            以此速率，每小时消耗 5% 的月度错误预算。
+            请在预算耗尽前排查。
+            舰队: {{ $labels.fleet }}
+
+      # 长窗口 — 捕获缓慢但持续的错误预算侵蚀
+      # 6 小时窗口, 燃烧速率 > 6 → 错误率 > 3%
+      - alert: SLOBurnRateCritical_Long
+        expr: |
+          (
+            sum(rate(gfd_allocation_total{phase="Failed"}[6h]))
+            /
+            sum(rate(gfd_allocation_total[6h]))
+          ) > 0.03
+        for: 10m
+        labels:
+          severity: critical
+          slo: allocation-availability
+          window: long-6h
+          burn_rate: "6"
+        annotations:
+          summary: "SLO 燃烧速率 CRITICAL（长窗口）"
+          description: >
+            过去 6 小时分配错误率为 {{ $value | humanizePercentage }}
+            （阈值: 3.0%）。
+            错误预算正以 6 倍正常速率被消耗。
+            可能已有大量月度预算被燃烧。
+            舰队: {{ $labels.fleet }}
+
+      # 错误预算完全耗尽
+      - alert: SLOErrorBudgetExhausted
+        expr: |
+          (
+            1 - (
+              sum(rate(gfd_allocation_total{phase="Allocated"}[30d]))
+              /
+              sum(rate(gfd_allocation_total[30d]))
+            )
+          ) > 0.005
+        for: 5m
+        labels:
+          severity: critical
+          slo: allocation-availability
+        annotations:
+          summary: "SLO 错误预算已耗尽"
+          description: >
+            月度分配成功率已降至 99.5% 以下。
+            0.5% 的错误预算已完全消耗。
+            当前错误率: {{ $value | humanizePercentage }}。
+            需要立即处理 — SLO 合规面临风险。
+
+  - name: fleet_operational_alerts
+    rules:
+      # =========================================================================
+      # 舰队运维告警 — 扩缩容与健康
+      # =========================================================================
+
+      # 舰队副本数为零（服务中断）
+      - alert: FleetZeroReplicas
+        expr: gfd_fleet_replicas == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "舰队 {{ $labels.fleet }} 副本数为零"
+          description: >
+            舰队 {{ $labels.fleet }}（命名空间 {{ $labels.namespace }}）
+            运行中的游戏服务器副本数为 0。玩家无法连接。
+            检查是否存在缩容过度触发或资源耗尽。
+
+      # 分配失败率飙升
+      - alert: FleetAllocationFailureSpike
+        expr: |
+          rate(gfd_allocation_total{phase="Failed"}[5m])
+          /
+          rate(gfd_allocation_total[5m])
+          > 0.10
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.fleet }} 分配失败率偏高"
+          description: >
+            舰队 {{ $labels.fleet }}（策略: {{ $labels.strategy }}）
+            分配失败率为 {{ $value | humanizePercentage }}。
+            检查资源耗尽或游戏服务器健康问题。
+
+      # 熔断器触发
+      - alert: FleetCircuitBreakerOpen
+        expr: rate(gfd_circuit_breaker_triggered[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "舰队 {{ $labels.fleet }} 熔断器已断开"
+          description: >
+            舰队 {{ $labels.fleet }}（命名空间 {{ $labels.namespace }}）
+            的熔断器已触发。
+            自动扩缩容决策已暂停。
+            需要人工介入 — 排查扩缩容引擎健康状态。
+
+      # 缓冲池耗尽
+      - alert: FleetBufferDepleted
+        expr: gfd_fleet_buffer_available == 0
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.fleet }} 预热缓冲池已耗尽"
+          description: >
+            舰队 {{ $labels.fleet }} 缓冲池中无可用预热游戏服务器。
+            新玩家可能遇到分配延迟。
+            考虑增加预热池大小或扩容。
+
+      # GFD Controller 抓取失败
+      - alert: GFDControllerDown
+        expr: up{job="gfd-controller"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "GFD Controller 指标端点已下线"
+          description: >
+            无法从 GFD controller（{{ $labels.pod }}）抓取指标。
+            舰队扩缩容决策可能不可见。
+
+  - name: node_health_alerts
+    rules:
+      # =========================================================================
+      # 节点健康告警（NHW 指标 — 需要 NHW 接入 metrics 端点）
+      # =========================================================================
+
+      # 节点健康严重
+      - alert: NodeHealthCritical
+        expr: nhw_node_health_status == 2
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "节点 {{ $labels.hostname }} 状态为 CRITICAL"
+          description: >
+            节点 {{ $labels.hostname }} 健康分为 {{ $value }}（CRITICAL）。
+            健康分: 查看 nhw_node_health_score 指标。
+            可能需要自动修复。
+
+      # 健康节点比例低于阈值
+      - alert: HealthyNodeRatioLow
+        expr: nhw_healthy_node_ratio < 0.5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "健康节点比例低于 50%"
+          description: >
+            仅 {{ $value | humanizePercentage }} 的节点处于健康状态。
+            超过一半集群处于 WARNING 或 CRITICAL 状态。
+            需要立即排查。
+
+      # Conntrack 表压力（通过 Node Guardian textfile 指标）
+      - alert: ConntrackPressure
+        expr: kn_conntrack_usage_percent > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "节点 {{ $labels.node }} conntrack 表使用率偏高"
+          description: >
+            节点 {{ $labels.node }} conntrack 表使用率为 {{ $value }}%。
+            可能导致连接跟踪失败。
+            执行: kubectl node-shell {{ $labels.node }} -- kn-diagnose --network
+
+      # 磁盘空间不足（通过 Node Guardian textfile 指标）
+      - alert: DiskSpaceLow
+        expr: kn_disk_usage_percent > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "节点 {{ $labels.node }}:{{ $labels.mount }} 磁盘使用率偏高"
+          description: >
+            磁盘使用率为 {{ $value }}%（{{ $labels.node }}:{{ $labels.mount }}）。
+            执行: kubectl node-shell {{ $labels.node }} -- kn-diagnose --disk

@@ -1,0 +1,152 @@
+groups:
+  - name: slo_recording_rules
+    interval: 30s
+    rules:
+      # =========================================================================
+      # SLO Recording Rules — 为 Grafana 仪表盘预计算的指标
+      #
+      # 这些 recording rules 在不同时间窗口预计算错误率和燃烧速率，
+      # 这样 Grafana 面板就不需要在每次仪表盘刷新时
+      # 都评估昂贵的 range query。
+      # =========================================================================
+
+      # --- 分配 SLI: 成功率 ---
+
+      # 5 分钟分配成功率
+      - record: slo:gfd_allocation_success_rate:rate5m
+        expr: |
+          sum(rate(gfd_allocation_total{phase="Allocated"}[5m]))
+          /
+          sum(rate(gfd_allocation_total[5m]))
+
+      # 1 小时分配成功率
+      - record: slo:gfd_allocation_success_rate:rate1h
+        expr: |
+          sum(rate(gfd_allocation_total{phase="Allocated"}[1h]))
+          /
+          sum(rate(gfd_allocation_total[1h]))
+
+      # 6 小时分配成功率
+      - record: slo:gfd_allocation_success_rate:rate6h
+        expr: |
+          sum(rate(gfd_allocation_total{phase="Allocated"}[6h]))
+          /
+          sum(rate(gfd_allocation_total[6h]))
+
+      # 30 天分配成功率（用于 SLO 合规判断）
+      - record: slo:gfd_allocation_success_rate:rate30d
+        expr: |
+          sum(rate(gfd_allocation_total{phase="Allocated"}[30d]))
+          /
+          sum(rate(gfd_allocation_total[30d]))
+
+      # --- 分配 SLI: 错误率 ---
+
+      # 5 分钟错误率
+      - record: slo:gfd_allocation_error_rate:rate5m
+        expr: |
+          sum(rate(gfd_allocation_total{phase="Failed"}[5m]))
+          /
+          sum(rate(gfd_allocation_total[5m]))
+
+      # 1 小时错误率
+      - record: slo:gfd_allocation_error_rate:rate1h
+        expr: |
+          sum(rate(gfd_allocation_total{phase="Failed"}[1h]))
+          /
+          sum(rate(gfd_allocation_total[1h]))
+
+      # 6 小时错误率
+      - record: slo:gfd_allocation_error_rate:rate6h
+        expr: |
+          sum(rate(gfd_allocation_total{phase="Failed"}[6h]))
+          /
+          sum(rate(gfd_allocation_total[6h]))
+
+      # 30 天错误率（用于错误预算计算）
+      - record: slo:gfd_allocation_error_rate:rate30d
+        expr: |
+          sum(rate(gfd_allocation_total{phase="Failed"}[30d]))
+          /
+          sum(rate(gfd_allocation_total[30d]))
+
+      # --- 燃烧速率倍数 ---
+      #
+      # 燃烧速率 = 错误率 / 错误预算
+      # 99.5% SLO 的错误预算 = 0.005（0.5%）
+      # burn_rate = error_rate / 0.005
+      # 例如 7.2% 错误率 → 0.072 / 0.005 = 14.4x 燃烧速率
+
+      # 短窗口（5 分钟）燃烧速率
+      - record: slo:gfd_allocation_burn_rate:short_5m
+        expr: |
+          slo:gfd_allocation_error_rate:rate5m / 0.005
+
+      # 中窗口（1 小时）燃烧速率
+      - record: slo:gfd_allocation_burn_rate:medium_1h
+        expr: |
+          slo:gfd_allocation_error_rate:rate1h / 0.005
+
+      # 长窗口（6 小时）燃烧速率
+      - record: slo:gfd_allocation_burn_rate:long_6h
+        expr: |
+          slo:gfd_allocation_error_rate:rate6h / 0.005
+
+      # --- 错误预算剩余 ---
+      #
+      # 错误预算剩余 = 1 - (30 天错误总量 / 30 天错误预算)
+      # 其中 30 天错误预算 = 0.005（0.5%）
+      # 以月度预算剩余百分比表示
+
+      - record: slo:gfd_allocation_error_budget_remaining_pct
+        expr: |
+          (
+            1 - (
+              slo:gfd_allocation_error_rate:rate30d / 0.005
+            )
+          ) * 100
+
+      # --- 舰队运营 ---
+
+      # 5 分钟内分配延迟 P99
+      - record: fleet:gfd_alloc_latency_p99:rate5m
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(gfd_allocation_latency_seconds_bucket[5m])) by (le, fleet)
+          )
+
+      # 5 分钟内分配延迟 P95
+      - record: fleet:gfd_alloc_latency_p95:rate5m
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(gfd_allocation_latency_seconds_bucket[5m])) by (le, fleet)
+          )
+
+      # 5 分钟内分配延迟 P50
+      - record: fleet:gfd_alloc_latency_p50:rate5m
+        expr: |
+          histogram_quantile(0.50,
+            sum(rate(gfd_allocation_latency_seconds_bucket[5m])) by (le, fleet)
+          )
+
+      # 每分钟扩缩容速率
+      - record: fleet:gfd_scale_rate_per_min:rate5m
+        expr: |
+          rate(gfd_scale_up_total[5m]) + rate(gfd_scale_down_total[5m])
+
+      # Reconcile 耗时 P95
+      - record: fleet:gfd_reconcile_p95:rate5m
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(gfd_reconcile_duration_seconds_bucket[5m])) by (le, controller)
+          )
+
+      # --- 节点健康 ---
+
+      # 按分组平均健康分
+      - record: nhw:avg_health_score:by_group
+        expr: avg by (group) (nhw_node_health_score)
+
+      # 每小时每类别告警速率
+      - record: nhw:alert_rate_per_hour:rate5m
+        expr: rate(nhw_alerts_total[5m]) * 3600
