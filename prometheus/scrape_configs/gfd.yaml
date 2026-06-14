@@ -1,0 +1,31 @@
+# Game Fleet Director — Prometheus 抓取配置
+#
+# GFD 通过 controller-runtime 在 :8080/metrics 暴露指标。
+# 此抓取配置以 game-fleet-system 命名空间中的
+# GFD controller 和 apiserver Pod 为目标。
+#
+# GFD 导出的自定义指标（pkg/metrics/collector.go）:
+#
+#   Gauges（仪表）:
+#     gfd_fleet_replicas{fleet, namespace}          — 当前副本数
+#     gfd_fleet_players_total{fleet, namespace}     — 舰队总玩家数
+#     gfd_fleet_buffer_available{fleet, namespace}  — 预热缓冲可用服务器数
+#
+#   Counters（计数器）:
+#     gfd_scale_up_total{fleet, namespace}          — 扩容事件次数
+#     gfd_scale_down_total{fleet, namespace}        — 缩容事件次数
+#     gfd_allocation_total{fleet, strategy, phase}  — 分配请求（phase: Allocated/Failed）
+#     gfd_circuit_breaker_triggered{fleet, namespace} — 熔断器断开次数
+#     gfd_reconcile_errors_total{controller}         — Reconcile 错误次数
+#
+#   Histograms（直方图）:
+#     gfd_allocation_latency_seconds{fleet, strategy}  — 分配延迟
+#     gfd_drain_duration_seconds{fleet}                — 排水耗时
+#     gfd_reconcile_duration_seconds{controller}       — Reconcile 循环耗时
+#
+# 外加 controller-runtime 内置指标:
+#   controller_runtime_reconcile_total, rest_client_requests_total,
+#   go_goroutines, process_* 等
+---
+# 此文件作为抓取配置参考文档，实际抓取配置
+# 已内联在 prometheus.yml 中。

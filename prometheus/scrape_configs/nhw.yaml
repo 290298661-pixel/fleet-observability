@@ -1,0 +1,15 @@
+# Node Health Watcher — Prometheus 抓取配置
+#
+# NHW 需要接入 prometheus_client（Python）以在 :9090/metrics
+# 暴露指标。此抓取配置已就绪，待接入完成后即可使用。
+#
+# 规划的指标（待 NHW 仓库添加）:
+#
+#   nhw_node_health_score{hostname, group}         — 节点健康分（0-100）
+#   nhw_node_health_status{hostname, group}        — 0=HEALTHY, 1=WARNING, 2=CRITICAL
+#   nhw_inspection_rounds_total                     — 总巡检轮次
+#   nhw_inspection_duration_seconds                 — 巡检轮次耗时直方图
+#   nhw_alerts_total{hostname, category, sub_check, level} — 按类型统计告警数
+#   nhw_healthy_node_ratio                          — 健康节点比例（0.0-1.0）
+#
+# 抓取配置在 prometheus.yml 的 job_name: nhw 下

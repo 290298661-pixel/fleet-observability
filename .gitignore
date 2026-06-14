@@ -1,0 +1,22 @@
+# Helm chart caches
+charts/
+*.tgz
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.tmp
+*.bak
+
+# Secrets (if any generated locally)
+*.secret.yaml
+secrets/

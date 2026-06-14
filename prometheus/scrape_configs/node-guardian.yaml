@@ -1,0 +1,22 @@
+# Node Guardian — Prometheus Textfile Collector 配置
+#
+# Node Guardian 是基于 Bash 的诊断工具集，不是常驻服务。
+# 它不暴露 HTTP 指标端点。取而代之，指标通过
+# Prometheus textfile collector 模式采集:
+#
+#   1. Cron 定时任务周期性运行 `kn-diagnose --prometheus`
+#   2. 输出写入 /var/lib/node_exporter/textfile_collector/
+#   3. node_exporter 的 textfile collector 拾取 .prom 文件
+#
+# 规划的 textfile 指标（来自 kn-diagnose --prometheus）:
+#
+#   kn_conntrack_usage_percent{node}    — Conntrack 表使用率 %
+#   kn_disk_usage_percent{node, mount}  — 按挂载点的磁盘使用率 %
+#   kn_memory_oom_events{node}          — OOM 杀死次数
+#   kn_fd_usage_percent{node}           — 文件描述符使用率 %
+#   kn_inode_usage_percent{node, mount} — 按挂载点的 inode 使用率 %
+#   kn_cpu_load_ratio{node}             — 负载均值 / CPU 数量
+#
+# Prometheus.yml 中的 node_exporter 抓取配置负责采集。
+# 确保 node_exporter 启动参数包含:
+#   --collector.textfile.directory=/var/lib/node_exporter/textfile_collector
