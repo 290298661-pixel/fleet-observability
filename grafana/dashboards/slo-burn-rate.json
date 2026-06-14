@@ -1,0 +1,572 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "datasource", "uid": "grafana" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": { "limit": 100, "matchAny": false, "tags": [], "type": "dashboard" },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "SLO 燃烧速率仪表盘 — 错误预算追踪、多窗口燃烧速率及 Game Fleet 分配可用性 SLO 合规。基于 Google SRE Workbook 第 5 章方法论。",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "tags": ["fleet-ops"],
+      "title": "舰队运营",
+      "type": "dashboards"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "tags": ["node-health"],
+      "title": "节点健康概览",
+      "type": "dashboards"
+    }
+  ],
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 30 },
+              { "color": "green", "value": 70 }
+            ]
+          },
+          "unit": "percent"
+        }
+      },
+      "gridPos": { "h": 10, "w": 6, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true,
+        "text": { "valueSize": 24 }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "expr": "slo:gfd_allocation_error_budget_remaining_pct",
+          "legendFormat": "Error Budget Remaining",
+          "refId": "A"
+        }
+      ],
+      "title": "错误预算剩余（月度）",
+      "type": "gauge"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 99.5 },
+              { "color": "green", "value": 99.9 }
+            ]
+          },
+          "unit": "percentunit"
+        }
+      },
+      "gridPos": { "h": 5, "w": 4, "x": 6, "y": 0 },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
+        "textMode": "value_and_name"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "expr": "slo:gfd_allocation_success_rate:rate30d",
+          "legendFormat": "30d Success Rate",
+          "refId": "A"
+        }
+      ],
+      "title": "30 天成功率",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 14.4 }
+            ]
+          },
+          "unit": "short",
+          "decimals": 1
+        }
+      },
+      "gridPos": { "h": 5, "w": 4, "x": 10, "y": 0 },
+      "id": 3,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
+        "textMode": "value_and_name"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "expr": "slo:gfd_allocation_burn_rate:short_5m",
+          "legendFormat": "Burn Rate (5m)",
+          "refId": "A"
+        }
+      ],
+      "title": "燃烧速率（5 分钟）",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 14.4 }
+            ]
+          },
+          "unit": "short",
+          "decimals": 1
+        }
+      },
+      "gridPos": { "h": 5, "w": 4, "x": 14, "y": 0 },
+      "id": 4,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
+        "textMode": "value_and_name"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "expr": "slo:gfd_allocation_burn_rate:medium_1h",
+          "legendFormat": "Burn Rate (1h)",
+          "refId": "A"
+        }
+      ],
+      "title": "燃烧速率（1 小时）",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 6 }
+            ]
+          },
+          "unit": "short",
+          "decimals": 1
+        }
+      },
+      "gridPos": { "h": 5, "w": 4, "x": 18, "y": 0 },
+      "id": 5,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
+        "textMode": "value_and_name"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "expr": "slo:gfd_allocation_burn_rate:long_6h",
+          "legendFormat": "Burn Rate (6h)",
+          "refId": "A"
+        }
+      ],
+      "title": "燃烧速率（6 小时）",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "description": "多窗口燃烧速率：SRE 面试的核心图表。在同一张图上展示不同时间尺度的错误预算消耗速率。5 分钟窗口有尖峰但 1h/6h 平坦 = 瞬态问题。三个窗口同时升高 = 真实的 SLO 风险。",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "燃烧速率 (x)",
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineWidth": 2,
+            "scaleDistribution": { "type": "linear" },
+            "thresholdsStyle": { "mode": "line" }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 14.4 }
+            ]
+          },
+          "unit": "short",
+          "decimals": 1
+        }
+      },
+      "gridPos": { "h": 12, "w": 12, "x": 0, "y": 10 },
+      "id": 6,
+      "options": {
+        "legend": { "calcs": ["max", "mean"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "expr": "slo:gfd_allocation_burn_rate:short_5m",
+          "legendFormat": "短窗口 (5m)",
+          "refId": "A"
+        },
+        {
+          "expr": "slo:gfd_allocation_burn_rate:medium_1h",
+          "legendFormat": "中窗口 (1h)",
+          "refId": "B"
+        },
+        {
+          "expr": "slo:gfd_allocation_burn_rate:long_6h",
+          "legendFormat": "长窗口 (6h)",
+          "refId": "C"
+        }
+      ],
+      "title": "多窗口燃烧速率（核心 SLO 图表）",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "description": "过去 30 天的分配成功率。SLO 阈值线位于 99.5%，方便发现违规。",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 98,
+            "axisSoftMax": 100,
+            "fillOpacity": 15,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineWidth": 2,
+            "scaleDistribution": { "type": "linear" },
+            "thresholdsStyle": { "mode": "line" }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 99.5 }
+            ]
+          },
+          "unit": "percentunit",
+          "min": 0.98,
+          "max": 1
+        }
+      },
+      "gridPos": { "h": 12, "w": 12, "x": 12, "y": 10 },
+      "id": 7,
+      "options": {
+        "legend": { "calcs": ["min", "mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "expr": "slo:gfd_allocation_success_rate:rate5m",
+          "legendFormat": "成功率 (5m 均值)",
+          "refId": "A"
+        },
+        {
+          "expr": "slo:gfd_allocation_success_rate:rate1h",
+          "legendFormat": "成功率 (1h 均值)",
+          "refId": "B"
+        }
+      ],
+      "title": "分配成功率（30 天趋势）",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": {
+            "align": "center",
+            "cellOptions": { "type": "auto" },
+            "filterable": false,
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "text", "value": null }] }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "SLO" },
+            "properties": [
+              { "id": "custom.cellOptions", "value": { "type": "color-text", "mode": "basic" } },
+              { "id": "custom.width", "value": 150 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "指标值" },
+            "properties": [
+              { "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "gradient" } },
+              { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 0 }] } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "状态" },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  { "options": { "from": 0.995, "to": 1, "text": "✅ 合规" }, "type": "range" },
+                  { "options": { "from": 0, "to": 0.995, "text": "❌ 违规" }, "type": "range" }
+                ]
+              },
+              { "id": "custom.cellOptions", "value": { "type": "color-background" } }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 22 },
+      "id": 8,
+      "options": { "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false }, "showHeader": true },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "expr": "slo:gfd_allocation_success_rate:rate30d",
+          "legendFormat": "Allocation Availability",
+          "refId": "A"
+        },
+        {
+          "expr": "fleet:gfd_reconcile_p95:rate5m",
+          "legendFormat": "Reconcile P95",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(gfd_drain_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "Drain P95",
+          "refId": "C"
+        }
+      ],
+      "title": "SLO 合规状态",
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "Time": true },
+            "renameByName": {
+              "slo:gfd_allocation_success_rate:rate30d": "分配可用性 99.5%",
+              "fleet:gfd_reconcile_p95:rate5m": "扩缩容 P95 < 5s",
+              "histogram_quantile(0.95, sum(rate(gfd_drain_duration_seconds_bucket[5m])) by (le))": "排水安全性"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "description": "错误预算消耗速率如何？展示不同燃烧速率下的错误预算消耗情况。",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "燃烧速率 (x)",
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineWidth": 1,
+            "scaleDistribution": { "type": "linear" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "max": 50,
+          "min": 0,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 22 },
+      "id": 9,
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
+        "namePlacement": "auto",
+        "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
+        "showUnfilled": true,
+        "valueMode": "color"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "expr": "slo:gfd_allocation_burn_rate:short_5m",
+          "legendFormat": "5m 燃烧速率",
+          "refId": "A"
+        },
+        {
+          "expr": "slo:gfd_allocation_burn_rate:medium_1h",
+          "legendFormat": "1h 燃烧速率",
+          "refId": "B"
+        },
+        {
+          "expr": "slo:gfd_allocation_burn_rate:long_6h",
+          "legendFormat": "6h 燃烧速率",
+          "refId": "C"
+        }
+      ],
+      "title": "燃烧速率对比",
+      "transformations": [
+        { "id": "renameByRegex", "options": { "regex": "slo:gfd_allocation_burn_rate:(\\w+)", "rename": "$1" } }
+      ],
+      "type": "bargauge"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "description": "SLO 违规事件日志。用于事后分析和 SLO 回顾会议。",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": {
+            "align": "center",
+            "cellOptions": { "type": "auto" },
+            "filterable": true,
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "text", "value": null }] }
+        }
+      },
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 22 },
+      "id": 10,
+      "options": { "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false }, "showHeader": true },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "expr": "ALERTS{alertname=~\"SLO.*\"}",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "{{alertname}}",
+          "refId": "A"
+        }
+      ],
+      "title": "活跃 SLO 告警",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "Time": false, "__name__": true, "alertstate": false, "instance": true, "job": true },
+            "renameByName": {
+              "alertname": "告警",
+              "severity": "严重度",
+              "alertstate": "状态",
+              "Active": "活跃自"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["fleet-observability", "slo", "sre"],
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": false, "text": "全部", "value": "$__all" },
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "definition": "label_values(gfd_allocation_total, fleet)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "舰队",
+        "multi": false,
+        "name": "fleet",
+        "options": [],
+        "query": { "query": "label_values(gfd_allocation_total, fleet)", "refId": "StandardVariableQuery" },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": { "from": "now-30d", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "🔥 SLO 燃烧速率 — Game Fleet",
+  "uid": "slo-burn-rate",
+  "version": 1,
+  "weekStart": "monday"
+}
