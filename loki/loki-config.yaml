@@ -1,0 +1,79 @@
+# Loki 配置 — 单二进制模式，适用于 kind 集群
+#
+# 设计理由: 选择 Loki 而非 Elasticsearch 因为:
+#   1. 仅需约 200MB RAM，Elasticsearch 需要 3+ 个 JVM 节点
+#   2. 只索引标签，不索引全文 — 成本大幅降低
+#   3. 通过 promtail 原生支持 Kubernetes 服务发现
+#   4. LogQL 语法与 PromQL 一致 — 同一套思维模型
+#   5. Grafana 原生集成（无需额外插件）
+#
+# 参见: docs/adr/001-choose-loki-over-elk.md
+
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+  log_level: info
+
+common:
+  instance_addr: 127.0.0.1
+  path_prefix: /var/loki
+  storage:
+    filesystem:
+      chunks_directory: /var/loki/chunks
+      rules_directory: /var/loki/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+# 摄入限制 — 针对 kind 集群采用保守值
+limits_config:
+  max_entries_limit_per_query: 5000
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h       # 7 天
+  retention_period: 336h                  # 14 天
+  allow_structured_metadata: true
+  volume_enabled: true
+
+# Schema 配置
+schema_config:
+  configs:
+    - from: "2024-01-01"
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: loki_index_
+        period: 24h
+
+# Compactor — 合并小索引文件
+compactor:
+  working_directory: /var/loki/compactor
+  compaction_interval: 10m
+  retention_enabled: true
+  retention_delete_delay: 2h
+  retention_delete_worker_count: 150
+
+# 查询前端
+query_range:
+  results_cache:
+    cache:
+      embedded_cache:
+        enabled: true
+        max_size_mb: 100
+  parallelise_shardable_queries: true
+
+# Ruler（用于日志告警 — 可选，phase 2）
+ruler:
+  alertmanager_url: http://alertmanager-operated.monitoring.svc:9093
+  ring:
+    kvstore:
+      store: inmemory
+  enable_api: true
+  enable_alertmanager_v2: true
+
+# 分析 — 禁用（本地开发）
+analytics:
+  reporting_enabled: false
