@@ -175,7 +175,7 @@ fleet-observability/
 │           └── alertmanager.yaml           # AlertManager 通知通道
 │
 └── docs/
-    ├── slo-definitions.md                 # ★ SLO 定义（面试亮点）
+    ├── slo-definitions.md                 # ★ SLO 定义
     └── adr/
         ├── 001-choose-loki-over-elk.md    # 为什么选 Loki 而非 ELK
         └── 002-slo-burn-rate-alerts.md    # 为什么用多窗口燃烧速率告警
@@ -200,7 +200,7 @@ SLO:  99.5%（月度）
   长窗口 (6h):  燃烧速率 > 6    → CRITICAL
 ```
 
-这意味着我们对**用户体验**告警（玩家能加入游戏吗？），而非系统内部指标。
+这意味着我们对**用户体验**告警，而非系统内部指标。
 
 ### 2. 选择 Loki，而非 ELK
 
