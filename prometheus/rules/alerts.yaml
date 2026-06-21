@@ -23,9 +23,9 @@ groups:
       - alert: SLOBurnRateCritical_Short
         expr: |
           (
-            sum(rate(gfd_allocation_total{phase="Failed"}[5m]))
+            sum by (fleet, namespace) (rate(gfd_allocation_total{phase="Failed"}[5m]))
             /
-            sum(rate(gfd_allocation_total[5m]))
+            clamp_min(sum by (fleet, namespace) (rate(gfd_allocation_total[5m])), 1e-9)
           ) > 0.072
         for: 2m
         labels:
@@ -47,9 +47,9 @@ groups:
       - alert: SLOBurnRateWarning_Medium
         expr: |
           (
-            sum(rate(gfd_allocation_total{phase="Failed"}[1h]))
+            sum by (fleet, namespace) (rate(gfd_allocation_total{phase="Failed"}[1h]))
             /
-            sum(rate(gfd_allocation_total[1h]))
+            clamp_min(sum by (fleet, namespace) (rate(gfd_allocation_total[1h])), 1e-9)
           ) > 0.072
         for: 5m
         labels:
@@ -71,9 +71,9 @@ groups:
       - alert: SLOBurnRateCritical_Long
         expr: |
           (
-            sum(rate(gfd_allocation_total{phase="Failed"}[6h]))
+            sum by (fleet, namespace) (rate(gfd_allocation_total{phase="Failed"}[6h]))
             /
-            sum(rate(gfd_allocation_total[6h]))
+            clamp_min(sum by (fleet, namespace) (rate(gfd_allocation_total[6h])), 1e-9)
           ) > 0.03
         for: 10m
         labels:
@@ -97,7 +97,7 @@ groups:
             1 - (
               sum(rate(gfd_allocation_total{phase="Allocated"}[30d]))
               /
-              sum(rate(gfd_allocation_total[30d]))
+              clamp_min(sum(rate(gfd_allocation_total[30d])), 1e-9)
             )
           ) > 0.005
         for: 5m
@@ -134,9 +134,9 @@ groups:
       # 分配失败率飙升
       - alert: FleetAllocationFailureSpike
         expr: |
-          rate(gfd_allocation_total{phase="Failed"}[5m])
+          sum by (fleet, namespace, strategy) (rate(gfd_allocation_total{phase="Failed"}[5m]))
           /
-          rate(gfd_allocation_total[5m])
+          clamp_min(sum by (fleet, namespace, strategy) (rate(gfd_allocation_total[5m])), 1e-9)
           > 0.10
         for: 3m
         labels:

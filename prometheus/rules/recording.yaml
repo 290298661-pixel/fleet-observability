@@ -15,60 +15,60 @@ groups:
       # 5 分钟分配成功率
       - record: slo:gfd_allocation_success_rate:rate5m
         expr: |
-          sum(rate(gfd_allocation_total{phase="Allocated"}[5m]))
+          sum by (fleet, namespace) (rate(gfd_allocation_total{phase="Allocated"}[5m]))
           /
-          sum(rate(gfd_allocation_total[5m]))
+          clamp_min(sum by (fleet, namespace) (rate(gfd_allocation_total[5m])), 1e-9)
 
       # 1 小时分配成功率
       - record: slo:gfd_allocation_success_rate:rate1h
         expr: |
-          sum(rate(gfd_allocation_total{phase="Allocated"}[1h]))
+          sum by (fleet, namespace) (rate(gfd_allocation_total{phase="Allocated"}[1h]))
           /
-          sum(rate(gfd_allocation_total[1h]))
+          clamp_min(sum by (fleet, namespace) (rate(gfd_allocation_total[1h])), 1e-9)
 
       # 6 小时分配成功率
       - record: slo:gfd_allocation_success_rate:rate6h
         expr: |
-          sum(rate(gfd_allocation_total{phase="Allocated"}[6h]))
+          sum by (fleet, namespace) (rate(gfd_allocation_total{phase="Allocated"}[6h]))
           /
-          sum(rate(gfd_allocation_total[6h]))
+          clamp_min(sum by (fleet, namespace) (rate(gfd_allocation_total[6h])), 1e-9)
 
       # 30 天分配成功率（用于 SLO 合规判断）
       - record: slo:gfd_allocation_success_rate:rate30d
         expr: |
-          sum(rate(gfd_allocation_total{phase="Allocated"}[30d]))
+          sum by (fleet, namespace) (rate(gfd_allocation_total{phase="Allocated"}[30d]))
           /
-          sum(rate(gfd_allocation_total[30d]))
+          clamp_min(sum by (fleet, namespace) (rate(gfd_allocation_total[30d])), 1e-9)
 
       # --- 分配 SLI: 错误率 ---
 
       # 5 分钟错误率
       - record: slo:gfd_allocation_error_rate:rate5m
         expr: |
-          sum(rate(gfd_allocation_total{phase="Failed"}[5m]))
+          sum by (fleet, namespace) (rate(gfd_allocation_total{phase="Failed"}[5m]))
           /
-          sum(rate(gfd_allocation_total[5m]))
+          clamp_min(sum by (fleet, namespace) (rate(gfd_allocation_total[5m])), 1e-9)
 
       # 1 小时错误率
       - record: slo:gfd_allocation_error_rate:rate1h
         expr: |
-          sum(rate(gfd_allocation_total{phase="Failed"}[1h]))
+          sum by (fleet, namespace) (rate(gfd_allocation_total{phase="Failed"}[1h]))
           /
-          sum(rate(gfd_allocation_total[1h]))
+          clamp_min(sum by (fleet, namespace) (rate(gfd_allocation_total[1h])), 1e-9)
 
       # 6 小时错误率
       - record: slo:gfd_allocation_error_rate:rate6h
         expr: |
-          sum(rate(gfd_allocation_total{phase="Failed"}[6h]))
+          sum by (fleet, namespace) (rate(gfd_allocation_total{phase="Failed"}[6h]))
           /
-          sum(rate(gfd_allocation_total[6h]))
+          clamp_min(sum by (fleet, namespace) (rate(gfd_allocation_total[6h])), 1e-9)
 
       # 30 天错误率（用于错误预算计算）
       - record: slo:gfd_allocation_error_rate:rate30d
         expr: |
-          sum(rate(gfd_allocation_total{phase="Failed"}[30d]))
+          sum by (fleet, namespace) (rate(gfd_allocation_total{phase="Failed"}[30d]))
           /
-          sum(rate(gfd_allocation_total[30d]))
+          clamp_min(sum by (fleet, namespace) (rate(gfd_allocation_total[30d])), 1e-9)
 
       # --- 燃烧速率倍数 ---
       #
@@ -112,27 +112,29 @@ groups:
       - record: fleet:gfd_alloc_latency_p99:rate5m
         expr: |
           histogram_quantile(0.99,
-            sum(rate(gfd_allocation_latency_seconds_bucket[5m])) by (le, fleet)
+            sum(rate(gfd_allocation_latency_seconds_bucket[5m])) by (le, fleet, namespace)
           )
 
       # 5 分钟内分配延迟 P95
       - record: fleet:gfd_alloc_latency_p95:rate5m
         expr: |
           histogram_quantile(0.95,
-            sum(rate(gfd_allocation_latency_seconds_bucket[5m])) by (le, fleet)
+            sum(rate(gfd_allocation_latency_seconds_bucket[5m])) by (le, fleet, namespace)
           )
 
       # 5 分钟内分配延迟 P50
       - record: fleet:gfd_alloc_latency_p50:rate5m
         expr: |
           histogram_quantile(0.50,
-            sum(rate(gfd_allocation_latency_seconds_bucket[5m])) by (le, fleet)
+            sum(rate(gfd_allocation_latency_seconds_bucket[5m])) by (le, fleet, namespace)
           )
 
       # 每分钟扩缩容速率
       - record: fleet:gfd_scale_rate_per_min:rate5m
         expr: |
-          rate(gfd_scale_up_total[5m]) + rate(gfd_scale_down_total[5m])
+          sum by (fleet, namespace) (rate(gfd_scale_up_total[5m]))
+          +
+          sum by (fleet, namespace) (rate(gfd_scale_down_total[5m]))
 
       # Reconcile 耗时 P95
       - record: fleet:gfd_reconcile_p95:rate5m
