@@ -2,8 +2,8 @@
 
 > Kubernetes observability configuration based on Prometheus, Loki, Grafana, and AlertManager.
 
-[![Status](https://img.shields.io/badge/status-in%20development-yellow)](https://github.com/290298661-pixel/fleet-observability)
-[![Stack](https://img.shields.io/badge/stack-Prometheus%20%2B%20Loki%20%2B%20Grafana-orange)](https://github.com/290298661-pixel/fleet-observability)
+[![Status](https://img.shields.io/badge/status-in%20development-yellow)](https://github.com/Shaohan-He/fleet-observability)
+[![Stack](https://img.shields.io/badge/stack-Prometheus%20%2B%20Loki%20%2B%20Grafana-orange)](https://github.com/Shaohan-He/fleet-observability)
 
 ## 概述
 
@@ -157,10 +157,10 @@ kubectl port-forward -n monitoring svc/kube-prometheus-grafana 3000:80
 
 | 仓库 | 关系 |
 | --- | --- |
-| [fleet-gitops](https://github.com/290298661-pixel/fleet-gitops) | 可用于部署本仓库中的可观测性配置 |
-| [node-health-watcher](https://github.com/290298661-pixel/node-health-watcher) | 节点巡检数据来源 |
-| [node-guardian](https://github.com/290298661-pixel/node-guardian) | 节点诊断日志和 textfile 指标来源 |
-| [k8s-healing-agent](https://github.com/290298661-pixel/k8s-healing-agent) | 可消费 AlertManager 告警的修复实验项目 |
+| [fleet-gitops](https://github.com/Shaohan-He/fleet-gitops) | 可用于部署本仓库中的可观测性配置 |
+| [node-health-watcher](https://github.com/Shaohan-He/node-health-watcher) | 节点巡检数据来源 |
+| [node-guardian](https://github.com/Shaohan-He/node-guardian) | 节点诊断日志和 textfile 指标来源 |
+| [k8s-healing-agent](https://github.com/Shaohan-He/k8s-healing-agent) | 可消费 AlertManager 告警的修复实验项目 |
 
 ## License
 
